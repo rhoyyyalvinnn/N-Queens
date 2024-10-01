@@ -15,6 +15,9 @@ namespace ACT4
     {
         int side;
         int n = 6;
+        double temperature;
+        double coolingRate;
+        Random random = new Random();
         SixState startState;
         SixState currentState;
         int moveCounter;
@@ -228,15 +231,56 @@ namespace ACT4
 
         private void button2_Click(object sender, EventArgs e)
         {
-            while (getAttackingPairs(currentState) > 0)
+            // Initialize temperature and cooling rate
+            temperature = 1000.0;
+            coolingRate = 0.85;
+
+            // Continue until solution is found or temperature is low
+            while (temperature > 1 && getAttackingPairs(currentState) > 0)
             {
-                executeMove((Point)chosenMove);
+                int currentH = getAttackingPairs(currentState); // Current number of attacking pairs
+                Point move = (Point)chosenMove; // Get the chosen move
+                int newH = hTable[move.X, move.Y]; // Heuristic for the new state
+
+                // Check if we should accept the move
+                if (acceptMove(currentH, newH))
+                {
+                    executeMove(move); // Perform the move
+                }
+
+                // Cool down the temperature
+                coolDown();
+
+                // Update UI
+                updateUI();
             }
         }
+
 
         private void Form1_Load(object sender, EventArgs e)
         {
 
-        }        
+        }
+
+        private bool acceptMove(int currentH, int newH)
+        {
+            if (newH < currentH)
+            {
+                return true; // Always accept if it's a better state
+            }
+            else
+            {
+                // Calculate the probability of accepting a worse move
+                double probability = Math.Exp((currentH - newH) / temperature);
+                return random.NextDouble() < probability; // Accept with probability based on temperature
+            }
+        }
+
+        private void coolDown()
+        {
+            temperature *= coolingRate; // Reduce temperature
+        }
+
+
     }
 }
